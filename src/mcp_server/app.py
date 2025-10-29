@@ -1,9 +1,24 @@
+from .browser import BrowserManager
+from .tools import Tools
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from .schemas import ToolResponse, ListResponse, CallRequest
 
 TOOLS = ["navigate", "screenshot", "extract_links", "fill_field", "click", "html"]
 
-app = FastAPI()
+browser = BrowserManager(headless=True)
+tools: Tools | None = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await browser.start()
+    global tools
+    tools = Tools(browser.page)
+    try: yield
+    finally: 
+        await browser.stop()
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/health")
 async def health():
@@ -22,4 +37,7 @@ async def call_tool(req: CallRequest):
     if req.tool not in TOOLS:
         raise HTTPException(status_code=400, detail=f"Unknown tool: {req.tool}")
     
-    return ToolResponse(ok=True, data={"tool": req.tool, "params": req.params})
+    assert tools is not None
+    handler = getattr(tools, req.tool)
+    result: ToolResponse = await handler(**req.params)
+    return result
