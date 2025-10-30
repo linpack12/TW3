@@ -43,3 +43,26 @@ class Tools:
         except Exception as e: 
             return ToolResponse(ok=False, error=str(e))
         
+    async def extract_links(self, filter: str | None = None) -> ToolResponse:
+        try: 
+            links = await self.page.eval_on_selector_all(
+                "a",
+                """els => els.map(a => ({
+                    text: a.innerText.trim(),
+                    href: a.href
+                }))"""
+            )
+
+            #filter 
+            if filter: 
+                filter_lower = filter.lower()
+                links = [
+                    link for link in links
+                    if filter_lower in link["text"].lower() or filter_lower in link["href"].lower()
+                ]
+            
+            return ToolResponse(ok=True, data=links)
+        
+        except Exception as e: 
+            return ToolResponse(ok=False, error=str(e))
+        
