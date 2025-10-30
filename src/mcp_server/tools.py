@@ -66,3 +66,43 @@ class Tools:
         except Exception as e: 
             return ToolResponse(ok=False, error=str(e))
         
+    async def fill_field(self, selector: str, value: str) -> ToolResponse:
+        try: 
+            locator = self.page.locator(selector)
+            
+            is_editable = await locator.is_editable()
+            if not is_editable:
+                return ToolResponse(ok=False, error=f"Element '{selector}' is not editable")
+            
+            #Fill value 
+            await locator.fill(value)
+
+            return ToolResponse(ok=True, data={"selector": selector, "value": value})
+     
+        except Exception as e: 
+            return ToolResponse(ok=False, error=str(e))
+    
+    async def click(self, selector: str) -> ToolResponse:
+        try:
+            locator = self.page.locator(selector)
+
+            #how many matches 
+            count = await locator.count()
+            if count == 0: 
+                return ToolResponse(ok=False, error=f"Element '{selector}' not found on page")
+            
+            if count > 1: 
+                return ToolResponse(ok=False, error=f"Selector '{selector}' matched {count} elements. Please provice a more specific selector.")
+            
+            single_element = locator.nth(0)
+            if not await single_element.is_enabled():
+                return ToolResponse(ok=False, error=f"Element '{selector}' is visible but disabled")
+            
+            await single_element.click()
+            
+            return ToolResponse(ok=True, data={"selector": selector})
+     
+        except Exception as e:
+            return ToolResponse(ok=False, error=str(e)) 
+        
+        
