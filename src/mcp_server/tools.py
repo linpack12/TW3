@@ -99,10 +99,28 @@ class Tools:
                 return ToolResponse(ok=False, error=f"Element '{selector}' is visible but disabled")
             
             await single_element.click()
-            
+
             return ToolResponse(ok=True, data={"selector": selector})
      
         except Exception as e:
             return ToolResponse(ok=False, error=str(e)) 
+    
+    async def html(self, out_dir: str= "artifacts/html_dumps", file_name: str | None = None) -> ToolResponse: 
+        try: 
+            markup = await self.page.content()
+            out_path = Path(out_dir)
+            out_path.mkdir(parents=True, exist_ok=True)
+
+            if not file_name: 
+                stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_name = f"page_{stamp}.html"
+            
+            file_path = out_path / file_name
+            file_path.write_text(markup, encoding="utf-8")
+
+            return ToolResponse(ok=True, data={"html_path": str(file_path), "message": "HTML saved successfully"})
+        
+        except Exception as e:
+            return ToolResponse(ok=False, error=str(e))
         
         
