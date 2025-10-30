@@ -1,7 +1,8 @@
+from loguru import logger
 from .browser import BrowserManager
 from .tools import Tools
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from .schemas import ToolResponse, ListResponse, CallRequest
 
 TOOLS = ["navigate", "screenshot", "extract_links", "fill_field", "click", "html"]
@@ -34,7 +35,10 @@ async def get_mcp_tools():
 
 @app.post("/mcp/tools/call", response_model=ToolResponse)
 async def call_tool(req: CallRequest):
+    logger.info(f"CALL tool={req.tool} params={req.params}")
+
     if req.tool not in TOOLS:
+        logger.warning(f"Unknown tool requested: {req.tool}")
         return ToolResponse(ok=False, error=f"Unknown tool: {req.tool}")
     
     assert tools is not None
@@ -42,7 +46,9 @@ async def call_tool(req: CallRequest):
     
     try: 
         result: ToolResponse = await handler(**req.params)
+        logger.info(f"RESULT tool={req.tool} ok={result.ok}")
         return result
     
     except Exception as e:
+        logger.exception(f"Unhandled error in tool '{req.tool}'")
         return ToolResponse(ok=False, error=f"Unhandled error in tool '{req.tool}': {str(e)}")
