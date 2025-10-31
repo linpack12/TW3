@@ -6,4 +6,5 @@ httpx==0.27.*
 loguru==0.7.*
 sse-starlette==2.1.*
 python-dotenv==1.0.*
-requests
+requests==2.*
+pprintpp==0.*
