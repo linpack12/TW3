@@ -8,3 +8,5 @@ sse-starlette==2.1.*
 python-dotenv==1.0.*
 requests==2.*
 pprintpp==0.*
+beautifulsoup4==4.12.*
+lxml==5.* 

@@ -122,5 +122,17 @@ class Tools:
         
         except Exception as e:
             return ToolResponse(ok=False, error=str(e))
+    
+    async def scroll(self, direction: str = "bottom") -> ToolResponse:
+        try: 
+            if direction == "top":
+                await self.page.evaluate("window.scrollTo(0, 0);")
+            else:
+                await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
+            
+            return ToolResponse(ok=True, data={"direction": direction})
+        
+        except Exception as e:
+            return ToolResponse(ok=False, error=str(e))
         
         

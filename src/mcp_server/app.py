@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from .schemas import ToolResponse, ListResponse, CallRequest
 
-TOOLS = ["navigate", "screenshot", "extract_links", "fill_field", "click", "html"]
+TOOLS = ["navigate", "screenshot", "extract_links", "fill_field", "click", "html", "scroll"]
 
 browser = BrowserManager(headless=True)
 tools: Tools | None = None

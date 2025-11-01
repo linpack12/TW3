@@ -43,7 +43,7 @@ class MCPClient:
     async def screenshot(self, full_page: bool = False) -> dict[str, Any]:
         return await self._call_tool("screenshot", {"full_page": full_page})
     
-    async def extract_links(self, fitler: Optional[str] = None) -> list[dict[str, str]]:
+    async def extract_links(self, filter: Optional[str] = None) -> list[dict[str, str]]:
         params: dict[str, Any] = {}
         if filter:
             params["filter"] = filter
@@ -61,4 +61,8 @@ class MCPClient:
     async def html(self) -> str:
         data = await self._call_tool("html", {})
         return data.get("html", "")
+    
+    async def scroll(self, direction: str = "bottom"):
+        payload = {"tool": "scroll", "params": {"direction": direction}}
+        return await self._call_tool("scroll", payload["params"])
 
