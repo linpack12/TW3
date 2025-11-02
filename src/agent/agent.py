@@ -21,6 +21,7 @@ class ScrapeAgent:
         
         print("[Agent] Fetching HTML...")
         html = await self.client.html()
+        print(f"[Agent] final HTML length: {len(html)} chars")
         return html
 
     async def _run_interactions(self):

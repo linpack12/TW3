@@ -60,7 +60,13 @@ class MCPClient:
     
     async def html(self) -> str:
         data = await self._call_tool("html", {})
-        return data.get("html", "")
+        if isinstance(data, dict) and "html" in data:
+            return data["html"]
+        
+        if isinstance(data, str): 
+            return data
+        
+        return ""
     
     async def scroll(self, direction: str = "bottom"):
         payload = {"tool": "scroll", "params": {"direction": direction}}

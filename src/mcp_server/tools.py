@@ -118,7 +118,7 @@ class Tools:
             file_path = out_path / file_name
             file_path.write_text(markup, encoding="utf-8")
 
-            return ToolResponse(ok=True, data={"html_path": str(file_path), "message": "HTML saved successfully"})
+            return ToolResponse(ok=True, data={"html_path": str(file_path), "message": "HTML saved successfully", "html": markup})
         
         except Exception as e:
             return ToolResponse(ok=False, error=str(e))

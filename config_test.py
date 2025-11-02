@@ -1,6 +1,6 @@
 from src.agent.config_models import ScrapeConfig
 
-sample_input = {
+sample_config = {
     "url": "https://example.com/products",
     "schema": {
         "products": [
@@ -22,8 +22,7 @@ sample_input = {
         }
     },
     "interactions": [
-        {"type": "click", "selector": "#accept-cookies"},
-        {"type": "wait", "duration": 2000},
+        {"type": "wait", "duration": 1000},
         {"type": "scroll", "direction": "bottom"}
     ],
     "options": {
@@ -33,7 +32,7 @@ sample_input = {
     }
 }
 
-config = ScrapeConfig(**sample_input)
+config = ScrapeConfig(**sample_config)
 
 print("URL:", config.url)
 print("Interactions:", [i.type for i in config.interactions])
