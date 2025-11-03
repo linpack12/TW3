@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  # Part 1: MCP Server
+  mcp-server:
+    build: .
+    ports:
+      - "8000:8000"
+    command: server
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./artifacts:/app/artifacts
+    container_name: tw3-mcp-server
+
+  # Part 2: Full Stack (MCP + HTTP Server)
+  scraping-agent:
+    build: .
+    ports:
+      - "8000:8000"
+      - "8888:8888"
+    command: server:http
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./artifacts:/app/artifacts
+    container_name: tw3-scraping-agent
+    profiles:
+      - scraping
+
+  # Demo runners
+  demo-part1:
+    build: .
+    command: demo:part1
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./artifacts:/app/artifacts
+    profiles:
+      - demo
+    container_name: tw3-demo-part1
+
+  demo-part2:
+    build: .
+    command: demo:part2
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./artifacts:/app/artifacts
+    profiles:
+      - demo
+    container_name: tw3-demo-part2
+
+  demo-all:
+    build: .
+    command: demo:all
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./artifacts:/app/artifacts
+    profiles:
+      - demo
+    container_name: tw3-demo-all

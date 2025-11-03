@@ -16,16 +16,15 @@ class SchemaAnalyser:
                 self.item_fields = self._flatten_fields(value[0])
                 break
     
-    def _flatten_fields(self, obj: dict[str, Any], prefix: str= "") -> dict[str, str]:
+    def _flatten_fields(self, obj: dict[str, Any], prefix: str = "") -> dict[str, str]:
         out: dict[str, str] = {}
         for field_name, field_type in obj.items():
-            full_key = f"{prefix}{field_name}" if prefix == "" else f"{prefix}.{field_name}"
+            full_key = f"{prefix}.{field_name}" if prefix else field_name 
             if isinstance(field_type, dict):
                 nested = self._flatten_fields(field_type, prefix=full_key)
                 out.update(nested)
             else:
                 out[full_key] = str(field_type)
-
         return out
     
     def debug_print(self) -> None:

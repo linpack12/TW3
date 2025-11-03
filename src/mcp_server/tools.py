@@ -135,4 +135,9 @@ class Tools:
         except Exception as e:
             return ToolResponse(ok=False, error=str(e))
         
-        
+    async def current_url(self) -> ToolResponse:
+        try: 
+            return ToolResponse(ok=True, data={"url": self.page.url})
+        except Exception as e:
+            return ToolResponse(ok=False, error=str(e))
+            

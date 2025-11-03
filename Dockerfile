@@ -33,13 +33,19 @@ RUN playwright install chromium
 COPY src /app/src
 COPY artifacts /app/artifacts
 COPY demo.py /app/demo.py
+COPY demo_part_2.py /app/demo_part_2.py
+COPY run_local_server.py /app/run_local_server.py
+COPY page1.html /app/page1.html
+COPY page2.html /app/page2.html
 COPY start.sh /app/start.sh
 
 RUN mkdir -p /app/artifacts/screenshots
+RUN mkdir -p /app/artifacts/html_dumps
+RUN mkdir -p /app/artifacts/json_dumps
 
 RUN chmod +x /app/start.sh
 
-EXPOSE 8000
+EXPOSE 8000 8888
 
 ENTRYPOINT ["/app/start.sh"]
 CMD []

@@ -1,3 +1,5 @@
+"""COMPLETE DEMO: Part 1 - MCP Server"""
+
 import requests
 from pprint import pprint
 
@@ -9,14 +11,17 @@ def call_tool(tool:str, params: dict):
     return resp.json()
 
 def main():
+    # Navigate to URL
     print("1) Navigate to https://example.com")
     navigate_response = call_tool("navigate", {"url": "https://example.com"})
     pprint(navigate_response)
 
+    # Take screenshot of viewport 
     print("\n2) Take screenshot (viewport only)")
     screenshot_response = call_tool("screenshot", {"full_page": False})
     pprint(screenshot_response)
 
+    # Extract links 
     print("\n3) Extract links")
     extract_link_response = call_tool("extract_links", {})
     pprint(extract_link_response)
@@ -27,10 +32,12 @@ def main():
         return
     
     first_link = links[0]["href"]
+    # Navigate to first link
     print(f"\n4) Navigate to first link: {first_link}")
     navigate_to_link_response = call_tool("navigate", {"url": first_link})
     pprint(navigate_to_link_response)
 
+    # Take a screenshot of the full page
     print("\n5) Take second screenshot (full page)")
     screenshot_full_page_response = call_tool("screenshot", {"full_page": True})
     pprint(screenshot_full_page_response)

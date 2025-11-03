@@ -35,7 +35,7 @@ class MCPClient:
         
         return body.get("data", {})
     
-    #Public methods for the agent to use
+    # public methods for the agent to use
 
     async def navigate(self, url: str) -> dict[str, Any]:
         return await self._call_tool("navigate", {"url": url})
@@ -71,4 +71,8 @@ class MCPClient:
     async def scroll(self, direction: str = "bottom"):
         payload = {"tool": "scroll", "params": {"direction": direction}}
         return await self._call_tool("scroll", payload["params"])
+    
+    async def current_url(self) -> str:
+        data = await self._call_tool("current_url", {})
+        return data.get("url", "")
 

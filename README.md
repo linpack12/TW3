@@ -1,56 +1,143 @@
-# TW3 MCP Server
-This project is built as part of a technical assigment for TW3Partners. 
+TW3 AI Web Automation and Intelligent Scrpaing
+A fullstack solution consisting of an MCP server for web automation and an intelligent web scrpaing agent. 
 
-##Features 
-The mcp server exposes a suite of browser autmation tools over HTTP, enabling the AI agensts to: 
-    - Navigate to URLs
-    - Take screenshots (viewport or full-page)
-    - Extract all hyperlinks
-    - Fill form fields safely
-    - Click elements
-    - Retrieve rendered HTML
+Project Overview
+This project is divided into two main parts:
 
-All tools conform to a **uniform response schema**:
-```json
-{
-  "ok": true,
-  "data": { ... },
-  "error": null
-}
-```
+Part 1: MCP Server - Web Automation Platform
+An HTTP-based MCP server that exposes browser autmation tools, allowing AI agents ro interact with web pages. 
 
-##Quick Start (Docker)
+Part 2: Intelligent Scraping Agent - Structured Data Extraction
+An intelligent agent built on top of the MCP server from part 1 that can extract structured data from dynamic web pages following a JSON schema, with automatic selector identification, type conversion, and pagination support. 
 
-This is the recommended way to run and test the demo for part 1.
+Key Features 
+Part 1: MCP Server 
+- Web Navigation - Navigate to URLs with error handling
+- Screenshots - Capture viewpoert or full page screenshots
+- Link Extraction - Extract all hyperlinks with optional filtering
+- Form Handling - Fill form fields safely with validation
+- Element Interaction - Click elements with error handling
+- HTML Retrieval - Get rendered HTML after JavaScript execution
 
+Part 2: Intelligent Scraping Agent
+- Schema Analysis - Automatically analyze JSON schemas
+- Selector Identifaction - Intelligently identify robust CSS selectors(data-* attributes, aria-labels, semantic tags)
+- Automatic Type Conversion - Convert data(string -> number, boolean, datetime)
+- Data Extraction & Validation - Extract and validate data with quality reporting 
+- Pagination Support - Autmatically detect and follow pagination links
+- User Interactions - Support for click, wait, and scroll actions
+- Quality Reporting - Completion rates, missing fields, error tracking
+- Retry Logic - Configurable retry mechanism for failed operations
+
+Quick Start
+
+Option 1: Docker
 Build the image
-- docker builld -t tw3-mcp .
+- docker build -t tw3
 
-Run in server mode - This starts the MCP API and exposes it on port 8000.
-- docker run --rm -p 8000:8000 tw3-mcp
+Run Part 1 Demo
+- docker run tw3 demo:part1
 
-Run in demo mode - This automatically runs the Mandatory Test Scenario: 
-    a) Navigate to https://example.com  
-    b) Take a screenshot
-    c) Extract all links
-    d) Navigate to the first link
-    e) Take another screenshot
+Run Part 2 Demo
+- docker run tw3 demo:part2
 
-- docker run --rm tw3-mcp demo
+Run Complete Demo(Part 1 + Part 2)
+- docker run tw3 demo:all
 
-Two screenshots will be created inside the container at: /app/artifacts/screenshots/
+Start MCP Server
+- ocker run -p 8000:8000 tw3 server
 
-To save them locally, mount a volume: docker run --rm -v ${PWD}/artifacts/screenshots:/app/artifacts/screenshots tw3-mcp demo
+Start MCP Server + HTTP Server (for Part 2 local testing)
+- docker run -p 8000:8000 -p 8888:8888 tw3 server:http
 
-Screenshots will appear under: ./artifacts/screenshots/
+Option 2: Docker Compose
 
-##Manual Testing (local requests)
+Run Part 1 Demo
+- docker-compose --profile demo run demo-part1
 
+Run Part 2 Demo
+- docker-compose --profile demo run demo-part2
+
+Run Complete Demo
+- docker-compose --profile demo run demo-all
+
+Start MCP Server
+- docker-compose up mcp-server
+
+Start Scraping Agent Server
+- docker-compose --profile scraping up scraping-agent
+
+Option 3: Local Development (Without Docker)
+Setup
+#create virtual enironment
+- python -m venv .venv
+- source .venv/bin/activate or on windows -> - .venv\Scripts\Activate.ps1
+
+#install dependencies
+- pip install -r requirements.txt
+- playwright install chromium
+
+Run Part 1 Demo
+#terminal 1:
+- uvicorn src.mcp_server.app:app
+#terminal 2: 
+- python demo.py
+
+Run Part 2 Demo
+#terminal 1 - start MCP Server
+- uvicorn src.mcp_server.app:app
+#terminal 2 - start HTTP server (for local HTML testing)
+- python run_local_server.py
+#terminal 3 - run demo 
+python demo_part_2.py
+
+Project Structure
+TW3/
+├── src/
+│   ├── mcp_server/                    # Part 1: MCP Server
+│   │   ├── app.py                     # FastAPI endpoints
+│   │   ├── browser.py                 # Playwright browser management
+│   │   ├── tools.py                   # Browser automation tools
+│   │   └── schemas.py                 # Pydantic response schemas
+│   │
+│   └── agent/                         # Part 2: Scraping Agent
+│       ├── agent.py                   # Main scraping orchestrator
+│       ├── config_models.py           # Configuration models
+│       ├── schema_analyser.py         # Schema analysis
+│       ├── select_planner.py          # Selector identification
+│       ├── extractor.py               # Data extraction logic
+│       ├── result_formatter.py        # Output formatting
+│       ├── mcp_client.py              # MCP communication
+│       └── retry.py                   # Retry logic
+│
+├── artifacts/                         # Generated output
+│   ├── json_dumps/                    # JSON extraction results
+│   ├── html_dumps/                    # HTML captures
+│   └── screenshots/                   # Screenshots
+│
+├── demo.py                            # Part 1: MCP Server demo
+├── demo_part_2.py                     # Part 2: Scraping Agent demo
+├── run_local_server.py                # HTTP server for local testing
+│
+├── page1.html                         # Test data for Part 2
+├── page2.html                         # Test data for Part 2
+│
+├── Dockerfile                         # Container definition
+├── docker-compose.yml                 # Multi-service orchestration
+├── start.sh                           # Entry point script
+├── requirements.txt                   # Python dependencies
+│
+├── DECISIONS.md                       # Technical decisions documentation
+├── README.md                          # This file
+├── .gitignore                         # Git ignore rules
+└── LICENSE                            # License
+
+Manual API Testing
 List available tools
-    - curl http://127.0.0.1:8000/mcp/tools/list
+- curl http://127.0.0.1:8000/mcp/tools/list
 
 Navigate to a page
-    - curl -X POST http://127.0.0.1:8000/mcp/tools/call \
+- curl -X POST http://127.0.0.1:8000/mcp/tools/call \
   -H "Content-Type: application/json" \
   -d '{"tool": "navigate", "params": {"url": "https://example.com"}}'
 
@@ -59,52 +146,13 @@ Take a screenshot
   -H "Content-Type: application/json" \
   -d '{"tool": "screenshot", "params": {"full_page": true}}'
 
-Available Tools: 
-    - navigate
-    - screenshot
-    - extract_links
-    - fill_field
-    - click
-    - html
+Extract links
+- curl -X POST http://127.0.0.1:8000/mcp/tools/call \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "extract_links", "params": {}}'
 
-##Architecture Overview
-src/
-└── mcp_server/
-    ├── app.py          → FastAPI endpoints for MCP protocol
-    ├── tools.py        → Browser automation methods (Playwright)
-    ├── browser.py      → Manages Chromium context & page
-    ├── schemas.py      → Pydantic models for uniform responses
-    └── __init__.py
 
-##Docker Entrypoint Modes
-The container is controlled via the start.sh script
-# Default server mode
-docker run --rm -p 8000:8000 tw3-mcp
-
-# Demo mode (runs full scenario)
-docker run --rm tw3-mcp demo
-
-Internally:
-In server mode, it starts Uvicorn.
-
-In demo mode, it starts Uvicorn in the background, runs demo.py, and stops the server automatically.
-
-##Development (local)
-If you prefer ro tun without Docker: 
-    - python -m venv .venv
-    - .\.venv\Scripts\Activate.ps1     # (Windows)
-    - pip install -r requirements.txt
-    - uvicorn src.mcp_server.app:app
-
-Then visit:
-http://127.0.0.1:8000/health
-
-Run demo locally:
-    - python demo.py
-
-##Notes
-start.sh uses LF line endings and has execute permissions to ensure Docker compatibility.
-Playwright dependencies are installed automatically during the build.
-To re-install Chromium manually inside the container:
-    - playwright install chromium
-
+Generated artifacts are saved to:
+Screenshots: artifacts/screenshots/
+HTML dumps: artifacts/html_dumps/
+JSON results: artifacts/json_dumps/
