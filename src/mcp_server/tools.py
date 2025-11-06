@@ -16,6 +16,7 @@ class Tools:
     
     async def screenshot(self, full_page: 
         bool = False, file_name: str | None = None, 
+        # Save all screenshots for debugging
         out_dir: str = "artifacts/screenshots", 
         quality: int | None = None, ) -> ToolResponse: 
 
@@ -45,6 +46,7 @@ class Tools:
         
     async def extract_links(self, filter: str | None = None) -> ToolResponse:
         try: 
+            # Retreieve dict with link and associated text
             links = await self.page.eval_on_selector_all(
                 "a",
                 """els => els.map(a => ({
@@ -53,7 +55,7 @@ class Tools:
                 }))"""
             )
 
-            #filter 
+            # Filter 
             if filter: 
                 filter_lower = filter.lower()
                 links = [
@@ -74,7 +76,7 @@ class Tools:
             if not is_editable:
                 return ToolResponse(ok=False, error=f"Element '{selector}' is not editable")
             
-            #Fill value 
+            # Fill field with value 
             await locator.fill(value)
 
             return ToolResponse(ok=True, data={"selector": selector, "value": value})
@@ -86,15 +88,17 @@ class Tools:
         try:
             locator = self.page.locator(selector)
 
-            #how many matches 
+            # Count number of matches
             count = await locator.count()
+            # Selector was not found on page 
             if count == 0: 
                 return ToolResponse(ok=False, error=f"Element '{selector}' not found on page")
-            
+            # Found to many corresponding selectors -> need to narrow it down
             if count > 1: 
                 return ToolResponse(ok=False, error=f"Selector '{selector}' matched {count} elements. Please provice a more specific selector.")
             
             single_element = locator.nth(0)
+            # Check if we can click on it 
             if not await single_element.is_enabled():
                 return ToolResponse(ok=False, error=f"Element '{selector}' is visible but disabled")
             
@@ -108,6 +112,7 @@ class Tools:
     async def html(self, out_dir: str= "artifacts/html_dumps", file_name: str | None = None) -> ToolResponse: 
         try: 
             markup = await self.page.content()
+            # Save html dumps for debugging
             out_path = Path(out_dir)
             out_path.mkdir(parents=True, exist_ok=True)
 
@@ -116,6 +121,7 @@ class Tools:
                 file_name = f"page_{stamp}.html"
             
             file_path = out_path / file_name
+            # Write the result into the target file
             file_path.write_text(markup, encoding="utf-8")
 
             return ToolResponse(ok=True, data={"html_path": str(file_path), "message": "HTML saved successfully", "html": markup})
@@ -124,6 +130,7 @@ class Tools:
             return ToolResponse(ok=False, error=str(e))
     
     async def scroll(self, direction: str = "bottom") -> ToolResponse:
+        # Scroll in the target direction (bottom/top)
         try: 
             if direction == "top":
                 await self.page.evaluate("window.scrollTo(0, 0);")
@@ -140,4 +147,4 @@ class Tools:
             return ToolResponse(ok=True, data={"url": self.page.url})
         except Exception as e:
             return ToolResponse(ok=False, error=str(e))
-            
+

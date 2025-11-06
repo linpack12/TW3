@@ -2,24 +2,33 @@ from __future__ import annotations
 from typing import Optional, Any
 import httpx
 
+# Raised when the MCP server returns an error response
 class MCPError(Exception):
     pass
 
+"""
+Async client wrapper for communicating with the local MCP server. 
+Internally all actions are routed through '_call_tool()' which matches the MCP API contract
+"""
 class MCPClient:
 
     def __init__(self, base_url: str = "http://127.0.0.1:8000"):
+        # Base URL of the MCP server, Defualts to a local dev instance
         self.base_url = base_url
         self._client: Optional[httpx.AsyncClient] = None
 
+    # Creates an AsyncClient session that keeps the connection open for reuse across multiple tool calls
     async def start(self) -> None: 
         if self._client is None:
             self._client = httpx.AsyncClient(timeout=10)
     
+    # Closes the underlying HTTP session when the agent shuts down
     async def stop(self) -> None: 
         if self._client is not None:
             await self._client.aclose()
             self._client = None
     
+    # Internal method for invoking any MCP tool
     async def _call_tool(self, tool: str, params: dict[str, Any]) -> dict[str, Any]:
         assert self._client is not None
 
@@ -35,7 +44,8 @@ class MCPClient:
         
         return body.get("data", {})
     
-    # public methods for the agent to use
+    # Public methods for the agent to use
+    # Each corresponds 1:1 to a registered tool on the MCP server
 
     async def navigate(self, url: str) -> dict[str, Any]:
         return await self._call_tool("navigate", {"url": url})

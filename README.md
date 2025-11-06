@@ -93,6 +93,10 @@ python demo_part_2.py
 
 Project Structure
 TW3/
+|├── diagrams/
+│   ├── Azure_Architecture_diagram_jpeg.jpg # Part 3: Diagram JPEG-format
+|   ├── Azure_Architecture_Diagram.svg # Part 3: Diagram SVG-format
+|
 ├── src/
 │   ├── mcp_server/                    # Part 1: MCP Server
 │   │   ├── app.py                     # FastAPI endpoints

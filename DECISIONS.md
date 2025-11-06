@@ -97,7 +97,32 @@ Future Improvements
 Simple selector discovery, as I said earlier integration with a call to a LLM to handle that or use ML would achieve even better selection. 
 We could also have connection pooling which enables multiple browser instances with load balancing. Also cahcing, cache extracted data and selector strategies. Machine learning to have more accurate selectors over time. Lastely rate limiting to prevent abuse of the MCP server. 
 
+Part 3: Azure Architecture Diagram
+The workprocess for this part consisted of keeping focus on the given requirements and gathering information about what Azure and Microsoft offers as solutions. I watched a lot of microsoft azure own videos on agents and mcp servers and different ways of implementing them into the Azure architecure which really help me to develop a overview of what I should use and how. 
 
+Most things are already described in the diagram but I thought it would be nice to have in text format as well. 
 
+I will give a summary of requirements given and my solution here: 
+Complete traceability of scraping - All jobs are logged in Cosmos DB and Blob Storage(WORM), with telemetry in Azure Monitor and Sentinel for monthly audits. 
 
+Respect for robots.txt & rate limiting - Enforced via API Management policies, robots.txt caching and validation handled by workers.
 
+Automatic IP rotation - Implemented through Azure NAT Gateway with static IP pools and automatic rotation. 
+
+End to end encryption - TLS 1.2+ in transit, CMK encryption at rest through Azure Key Vault integration. 
+
+Strict network segregation - Private Container App envoirment with Azure Firewall and no public DB endpoints.
+
+Monthly security audits & centralized logs - Azure Monitor, Application Insights, Sentinel provide unified observability. 
+
+Scalability (500-1000 users) - Azure Service Bus, autoscaling Container Apps, and Redis caching handle concurrent load. 
+
+SLA 99.9% availability - Azure Fron Door (global load balancing) + geo redundant Cosmos/Blob + continer resilience. 
+
+Backup & Recovery - Recovery Services Vault (RSV) with CMK encryption, immutability(WORM), and geo replication (GRS). 
+
+Multi clod / Migration - You could to a off site copy to AWS S3/GCP stoarge which supports gradual migration from on-prem -> Azure -> multi region DR. 
+
+This in the grand scheme means we achive a system with full compliance with GDPR and ISO 27001, supports enterprise observability, and maintins high availability through Azure PaaS based rudundancy. The deisgn is modular, scalable and autiable end to end. 
+
+Was a lot of fun working on this mini project! 

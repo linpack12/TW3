@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from bs4 import BeautifulSoup
 from datetime import datetime
 import re 
 
+# Assigns a value into a nested dictionary structure given a dottet key
 def _assign_nested(target: Dict[str, Any], dotted_key: str, value: Any) -> None:
     parts = dotted_key.split(".")
     cur = target
@@ -15,13 +16,16 @@ def _assign_nested(target: Dict[str, Any], dotted_key: str, value: Any) -> None:
         if is_last:
             cur[part] = value
         else:
-            if part not in cur:
-                cur[part] = {}
-            elif not isinstance(cur[part], dict):
+            # Create intermediate dicts if missing or not of dict type
+            if part not in cur or not isinstance(cur[part], dict):
                 cur[part] = {}
             
             cur = cur[part]
 
+"""
+Attempts to cast a raw string into the expected data type defined 
+by the craping schema (string, number, boolean, datetime).
+"""
 def _cast_value(raw_text: str, expected_type: str) -> Any:
     if raw_text is None:
         return None
@@ -36,7 +40,7 @@ def _cast_value(raw_text: str, expected_type: str) -> Any:
         return text
     
     if t == "number":
-        # extract first number including decimals
+        # extract first number including decimals and commas
         match = re.search(r"[0-9]+(?:[.,][0-9]+)?", text)
         if not match:
             return None
@@ -49,6 +53,7 @@ def _cast_value(raw_text: str, expected_type: str) -> Any:
         except ValueError: 
             return None
     
+    # Boolean casting based on common textual patterns
     if t == "boolean":
         lowered = text.lower()
         truthy = ["in stock", "available", "yes", "true", "1", "instock"]
@@ -68,6 +73,7 @@ def _cast_value(raw_text: str, expected_type: str) -> Any:
     
     return text
 
+# Extract the most relevant textual or attribute value from a given element
 def _extract_candidate_value(el) -> str:
     if el is None:
         return None
@@ -82,14 +88,21 @@ def _extract_candidate_value(el) -> str:
     text = el.get_text(separator=" ", strip=True)
     return text if text else None
         
-
+# Generic data extractor that converts HTML and a selector plan into structured data
 class Extractor:
     def __init__(self, html: str, selector_plan, field_types: Dict[str, str]):
+        # Parse the HTML into a DOM tree for CSS selector access
         self.soup = BeautifulSoup(html, "lxml")
         self.plan = selector_plan
         self.field_types = field_types
     
+    """
+    Executes the extraction plan and returns:
+    - all_items -> list of structured records extracted from the HTML
+    - quality_info -> diagnostic info about missing fields per item
+    """
     def run(self) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        # Determine extraction scope: multiple containers or full page
         if self.plan.item_selector: 
             containers = self.soup.select(self.plan.item_selector)
         else:
@@ -98,12 +111,16 @@ class Extractor:
         all_items: List[Dict[str, Any]] = []
         missing_items: List[List[str]] = []
 
+        # Process each container
         for container in containers:
             item_data: Dict[str, Any] = {}
             missing_fields: List[str] = []
 
+            # Iterate over all target fields and their candidate selectors
             for field_name, selector_candidates in self.plan.field_selectors.items(): 
                 expected_type = self.field_types.get(field_name, "string")
+
+                # Try each selector in order until one matches
                 raw_val: Optional[str] = self._extract_first_match(container, selector_candidates)
                 
                 if raw_val is None:
@@ -117,6 +134,7 @@ class Extractor:
 
                 _assign_nested(item_data, field_name, casted_val)
             
+            # Only include non empty results
             if item_data:
                 all_items.append(item_data)
                 missing_items.append(missing_fields)
@@ -128,6 +146,9 @@ class Extractor:
         
         return all_items, quality_info
     
+    """
+    Attemps each CSS selector in order and return first non empty value
+    """
     def _extract_first_match(self, scope, selector_candidates: List[str]) -> Optional[str]:
         for sel in selector_candidates: 
             try:
@@ -139,6 +160,7 @@ class Extractor:
                 if extracted:
                     return extracted
             except Exception:
+                # Skip broken selectors or parsing errors
                 continue
         
         return None

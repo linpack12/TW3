@@ -1,12 +1,13 @@
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from bs4 import BeautifulSoup
 from collections import Counter
 
+# Immutable plan the extractor uses -> an item scope + per field selector fallbacks
 class SelectorPlan:
     def __init__(self, item_selector: Optional[str], field_selectors: Dict[str, List[str]]):
-        self.item_selector = item_selector
-        self.field_selectors = field_selectors
+        self.item_selector = item_selector # CSS that identifies one "item"/container
+        self.field_selectors = field_selectors # List of CSS selectors - tried in order
     
     def debug_print(self) -> None:
         print("[SelectorPlan]")
@@ -15,6 +16,11 @@ class SelectorPlan:
         for field, selectors in self.field_selectors.items():
             print(f" {field}: {selectors}")
 
+"""
+Builds a SelectorPlan from HTML and expected fields
+- Detects a repeated "item" container
+- Produces deduped fallback selectors per field name
+"""
 class SelectorPlanner: 
     def __init__(self, html: str, collection_name: Optional[str], expected_fields: Dict[str, str]):
         self.html = html
@@ -22,6 +28,7 @@ class SelectorPlanner:
         self.expected_fields = expected_fields
         self.soup = BeautifulSoup(self.html, "lxml")
 
+    # Main entry -> infer item container and per field selector candidates
     def build_plan(self) -> SelectorPlan:
         item_selector = self._find_reapeated_item_selector()
 
@@ -32,10 +39,15 @@ class SelectorPlanner:
         
         return SelectorPlan(item_selector=item_selector, field_selectors=field_selectors)
     
+    """
+    Try to detect a list container by attributes/classes commonly used for cards/rsults
+    Returns the most frequent selector observed, or None if no strong candidate
+    """
     def _find_reapeated_item_selector(self) -> Optional[str]:
         keywords = ["product", "card", "item", "listing", "result", "post", "entry", "record"]
         candidates = []
 
+        # Strong signals: data-testid/data-id
         for div in self.soup.select("div[data-testid], div[data-id]"):
             classes = div.get("class", [])
             data_testid = div.get("data-testid", "")
@@ -45,6 +57,7 @@ class SelectorPlanner:
                 if sel:
                     candidates.append(sel)
         
+        # Keyword based classes
         for div in self.soup.select("div[class]"):
             class_list = div.get("class", [])
             if not class_list:
@@ -57,18 +70,21 @@ class SelectorPlanner:
                 if sel:
                     candidates.append(sel)
         
+        # Other common item like containers
         for el in self.soup.select("li[class], article[class], section.item, div.item"):
             sel = self._element_to_selector(el)
             if sel:
                 candidates.append(sel)
         
+        # Choose the most frequently occuring candidate
         if candidates:
             counts = Counter(candidates)
-            most_common = Counter(candidates).most_common(1)[0][0]
+            most_common = counts.most_common(1)[0][0]
             return most_common
         
         return None
     
+    # Build a stable selector preference: data-testid > data-id > class chain > id
     def _element_to_selector(self, el) -> Optional[str]:
         if el.has_attr("data-testid"):
             return f"[data-testid='{el['data-testid']}']"
@@ -85,25 +101,26 @@ class SelectorPlanner:
         
         return None
     
+    # Generate fallback selectors for a field name
     def _find_field_selectors(self, field_name: str) -> List[str]:
         last_segment = field_name.split(".")[-1].lower()
         finds: List[str] = []
 
-        #Data attributes - Tier 1 most robust 
+        # Data attributes - Tier 1 most robust 
         finds.append(f"[data-testid*='{last_segment}']")
         finds.append(f"[data-testid*='{last_segment.replace('_', '-')}']")
         finds.append(f"[data-{last_segment}]")
         finds.append(f"[data-{last_segment.replace('_', '-')}]")
 
-        #Aria attributes 
+        # Aria attributes 
         finds.append(f"[aria-label*='{last_segment}']")
         finds.append(f"[aria-label*='{last_segment.replace('_', ' ')}']")
         finds.append(f"[role*='{last_segment}']")
 
-        #Microdata semantic
+        # Microdata 
         finds.append(f"[itemprop='{last_segment}']")
 
-        #Class based selectors - Tier 2 robustness
+        # Class based selectors - Tier 2 robustness
         finds.append(f".{last_segment}")
         finds.append(f".{last_segment.replace('_', '-')}")
         finds.append(f".{last_segment}-value")
@@ -112,7 +129,7 @@ class SelectorPlanner:
         finds.append(f".{last_segment}-name")
         finds.append(f".{last_segment}-field")
 
-        #Domain specific selectors - Tier 3
+        # Domain specific selectors - Tier 3
         if "price" in last_segment or "cost" in last_segment:
             finds.extend([
                 ".price",

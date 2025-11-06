@@ -5,11 +5,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from .schemas import ToolResponse, ListResponse, CallRequest
 
+# Supported MCP tools exposed to the agent
 TOOLS = ["navigate", "screenshot", "extract_links", "fill_field", "click", "html", "scroll", "current_url"]
 
+# Single shared browser session managed by Playwright
 browser = BrowserManager(headless=True)
 tools: Tools | None = None
 
+# FastApi lifespan hook to handel startup/shutdown
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await browser.start()
@@ -33,10 +36,12 @@ async def mcp_initialize():
 async def get_mcp_tools():
     return ToolResponse(ok=True, data={"tools": TOOLS})
 
+# Core endpoint -> executes a requested MCP tool
 @app.post("/mcp/tools/call", response_model=ToolResponse)
 async def call_tool(req: CallRequest):
     logger.info(f"CALL tool={req.tool} params={req.params}")
 
+    # Validate tool existence
     if req.tool not in TOOLS:
         logger.warning(f"Unknown tool requested: {req.tool}")
         return ToolResponse(ok=False, error=f"Unknown tool: {req.tool}")
